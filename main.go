@@ -2,107 +2,103 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/binary"
 	"fmt"
+	"huacache/client/client"
+	"huacache/client/serialize"
+	"io"
 	"log"
+	"math/big"
 	"net"
-	"time"
+	"sync" // 导入 sync 包
 )
 
-// Bluebell 消息结构
-type Bluebell struct {
-	Command string
-	Key     string // 键，通常是用于标识数据的字符串
-	Value   []byte // 值，存储数据的字节数组
-	Group   string // 组，表示消息所属的组或类别
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func generateRandomString(length int) string {
+	result := make([]byte, length)
+	for i := range result {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letterBytes))))
+		if err != nil {
+			return ""
+		}
+		result[i] = letterBytes[num.Int64()]
+	}
+	return string(result)
 }
 
-func (b *Bluebell) String() string {
-	return fmt.Sprintf("Bluebell{\n  Command: %s,\n  Key: %s,\n  Value: %s,\n  Group: %s\n}",
-		b.Command,
-		b.Key,
-		string(b.Value), // 将 []byte 转换为 string
-		b.Group,
-	)
-}
+func newClient(wg *sync.WaitGroup) {
+	defer wg.Done()
 
-// 序列化：将 Bluebell 结构体序列化为二进制
-func (b *Bluebell) Serialize() ([]byte, error) {
-	buf := new(bytes.Buffer)
-
-	// Command 字段
-	if err := writeString(buf, b.Command); err != nil {
-		return nil, err
-	}
-
-	// Key 字段
-	if err := writeString(buf, b.Key); err != nil {
-		return nil, err
-	}
-
-	// Value 字段
-	if err := writeBytes(buf, b.Value); err != nil {
-		return nil, err
-	}
-
-	// Group 字段
-	if err := writeString(buf, b.Group); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
-// writeString 将字符串以长度+内容的形式写入到缓冲区
-func writeString(buf *bytes.Buffer, s string) error {
-	length := uint32(len(s))
-	if err := binary.Write(buf, binary.BigEndian, length); err != nil {
-		return err
-	}
-	_, err := buf.Write([]byte(s))
-	return err
-}
-
-// writeBytes 将 []byte 以长度+内容的形式写入到缓冲区
-func writeBytes(buf *bytes.Buffer, b []byte) error {
-	length := uint32(len(b))
-	if err := binary.Write(buf, binary.BigEndian, length); err != nil {
-		return err
-	}
-	_, err := buf.Write(b)
-	return err
-}
-
-func main() {
-	// 服务器地址和端口
 	serverAddr := "127.0.0.1:9000"
-
-	// 创建一个连接到服务器
 	conn, err := net.Dial("tcp", serverAddr)
 	if err != nil {
-		log.Fatalf("Failed to connect: %v", err)
+		log.Printf("Failed to connect: %v", err)
+		return
 	}
 	defer conn.Close()
 
-	// 创建一个 Bluebell 消息
-	msg := &Bluebell{
-		Command: "SET",
-		Key:     "exampleKey",
-		Value:   []byte("exampleValue"),
-		Group:   "exampleGroup",
+	count := 10
+	for i := 0; i < count; i++ {
+		msg := &serialize.Bluebell{
+			Command: client.SET_KEY,
+			Key:     generateRandomString(10),
+			Value:   []byte(generateRandomString(30)),
+			Group:   "huahuo",
+		}
+		data, err := msg.Encode()
+		if err != nil {
+			log.Printf("Failed to serialize message: %v", err)
+			continue
+		}
+		_, err = conn.Write(data)
+		if err != nil {
+			log.Printf("Failed to send message: %v", err)
+			continue
+		}
 	}
 
-	// 序列化消息
-	data, err := msg.Serialize()
-	if err != nil {
-		log.Fatalf("Failed to serialize message: %v", err)
+	buffer := bytes.NewBuffer([]byte{})
+	for {
+		inBuffer := make([]byte, 1024)
+		n, err := conn.Read(inBuffer)
+		if err != nil && err != io.EOF {
+			log.Printf("Failed to read response: %v", err)
+			break
+		}
+		if n > 0 {
+			buffer.Write(inBuffer[:n])
+		}
+
+		for buffer.Len() >= 4 {
+			header := buffer.Bytes()[:4]
+			messageLength := binary.BigEndian.Uint32(header)
+			if uint32(buffer.Len()) < messageLength+4 {
+				break
+			}
+
+			buffer.Next(4)
+			message := buffer.Next(int(messageLength))
+
+			fmt.Printf("Received message: %s\n", string(message))
+		}
+
+		if err == io.EOF {
+			break
+		}
+	}
+	fmt.Println("Client is shutting down")
+}
+
+func main() {
+	var wg sync.WaitGroup // 创建 WaitGroup
+
+	goroutines := 100
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)         // 增加等待计数
+		go newClient(&wg) // 将 WaitGroup 传递给 Goroutine
 	}
 
-	// 发送消息到服务器
-	_, err = conn.Write(data)
-	if err != nil {
-		log.Fatalf("Failed to send message: %v", err)
-	}
-	fmt.Println("Message sent to server:", data)
-	time.Sleep(20 * time.Second)
+	wg.Wait() // 等待所有 Goroutine 完成
 }
