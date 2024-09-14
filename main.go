@@ -12,6 +12,7 @@ import (
 	"math/big"
 	"net"
 	"sync" // 导入 sync 包
+	"time"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -39,8 +40,10 @@ func newClient(wg *sync.WaitGroup) {
 	}
 	defer conn.Close()
 
-	count := 10
+	count := 5000
+	start := time.Now()
 	for i := 0; i < count; i++ {
+
 		msg := &serialize.Bluebell{
 			Command: client.SET_KEY,
 			Key:     generateRandomString(10),
@@ -82,6 +85,9 @@ func newClient(wg *sync.WaitGroup) {
 			message := buffer.Next(int(messageLength))
 
 			fmt.Printf("Received message: %s\n", string(message))
+			duration := time.Since(start)
+			fmt.Printf("Bluebell FiveThousandTest Done: %.2f ms\n", duration.Seconds()*1000)
+
 		}
 
 		if err == io.EOF {
@@ -93,12 +99,11 @@ func newClient(wg *sync.WaitGroup) {
 
 func main() {
 	var wg sync.WaitGroup // 创建 WaitGroup
-
-	goroutines := 100
+	goroutines := 1
 	for i := 0; i < goroutines; i++ {
 		wg.Add(1)         // 增加等待计数
 		go newClient(&wg) // 将 WaitGroup 传递给 Goroutine
 	}
-
+	client.FiveThousandTest()
 	wg.Wait() // 等待所有 Goroutine 完成
 }
