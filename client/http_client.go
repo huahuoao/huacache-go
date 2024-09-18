@@ -55,11 +55,11 @@ func HttpTest() {
 	}
 }
 
-func FiveThousandTest() {
+func ThousandTest() {
 	start := time.Now()
 	for i := 0; i < 5000; i++ {
 		HttpTest()
 	}
 	duration := time.Since(start).Milliseconds() // 获取毫秒
-	fmt.Printf("HTTP FiveThousandTest done: %.2f ms\n", float64(duration))
+	fmt.Printf("HTTP ThousandTest done: %.2f ms\n", float64(duration))
 }
