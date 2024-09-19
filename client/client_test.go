@@ -14,8 +14,6 @@ type MyStruct struct {
 	Age  int
 }
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
 // 随机生成5KB的字符串
 
 func randomString(n int) string {
