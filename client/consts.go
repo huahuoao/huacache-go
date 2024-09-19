@@ -8,15 +8,15 @@ const (
 
 // command
 const (
-	GET_KEY    = "get"
-	SET_KEY    = "set"
-	DEL_KEY    = "del"
-	NEW_GROUP  = "new_group"
-	LIST_GROUP = "list_group"
-	DEL_GROUP  = "del_group"
-	GET_KEYS   = "keys"
+	GET_KEY   = "get"
+	SET_KEY   = "set"
+	DEL_KEY   = "del"
+	NEW_GROUP = "new_group"
+	DEL_GROUP = "del_group"
 )
-
+const (
+	SUCCESS = "200"
+)
 const (
 	CONSISTENTHASH_VIRTUAL_NODE_NUM = 160
 )

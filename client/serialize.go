@@ -1,10 +1,12 @@
-package serialize
+package client
 
 import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
+
+	"github.com/bytedance/sonic"
 )
 
 // Bluebell 消息结构
@@ -145,4 +147,12 @@ func (b *Bluebell) Encode() ([]byte, error) {
 	// 5. 将序列化数据复制到总长度后的部分
 	copy(finalData[4:], serializedData)
 	return finalData, nil
+}
+
+func SonicSerialize(b interface{}) []byte {
+	jsonBytes, err := sonic.Marshal(b)
+	if err != nil {
+		return nil
+	}
+	return jsonBytes
 }
