@@ -1,5 +1,5 @@
 # 快速入门
-
+link：https://github.com/huahuoao/huacache
 ## 包导入
 
 ```shell
