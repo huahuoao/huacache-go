@@ -19,7 +19,6 @@ func (c *Client) SetStruct(key string, value interface{}) error {
 
 	// Check if the total size exceeds the limit
 
-
 	request := &Bluebell{
 		Command: SET_KEY,
 		Key:     key,
@@ -64,7 +63,7 @@ func (c *Client) SetString(key string, value string) error {
 	return nil
 }
 
-func (c *Client) GetStruct(key string, obj interface{}) (interface{}, error) {
+func (c *Client) GetStruct(key string, obj interface{}) error {
 	request := &Bluebell{
 		Command: GET_KEY,
 		Key:     key,
@@ -75,14 +74,14 @@ func (c *Client) GetStruct(key string, obj interface{}) (interface{}, error) {
 	go c.sendRequestToServer(request)
 	res, err := c.waitForResponseWithTimeout(5 * time.Second) // 等待响应，设置超时
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if res.Code != SUCCESS {
-		return nil, errors.New(string(res.Result))
+		return errors.New(string(res.Result))
 	}
 	sonic.Unmarshal(res.Result, obj)
-	return obj, nil
+	return nil
 }
 
 func (c *Client) GetString(key string) (string, error) {
