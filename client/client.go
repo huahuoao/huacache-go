@@ -10,6 +10,8 @@ import (
 	"net"
 	"sync"
 	"time"
+
+	"github.com/valyala/bytebufferpool"
 )
 
 var timerPool = sync.Pool{
@@ -24,14 +26,14 @@ type Client struct {
 	Conn       net.Conn
 	Group      string
 	ResponseCh chan []byte
-	Buffer     *ByteBuffer // Use ByteBuffer instead of bytes.Buffer
+	Buffer     *bytebufferpool.ByteBuffer
 }
 
 func New(serverAddr string, serverPort int) *Client {
 	return &Client{
 		ServerAddr: serverAddr,
 		ServerPort: serverPort,
-		Buffer:     &ByteBuffer{},
+		Buffer:     bytebufferpool.Get(),
 	}
 }
 
@@ -144,7 +146,8 @@ func (c *Client) Close() error {
 			log.Printf("Failed to close connection: %v", err)
 			return err
 		}
-		log.Println("Client is shutting down" + time.Now().Format("2006-01-02 15:04:05"))
 	}
+	bytebufferpool.Put(c.Buffer)
+	log.Println("Client is shutting down " + time.Now().Format("2006-01-02 15:04:05"))
 	return nil
 }
