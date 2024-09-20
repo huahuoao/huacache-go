@@ -12,6 +12,7 @@ type MyStruct struct {
 }
 
 // 随机生成5KB的字符串
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 func randomString(n int) string {
 	b := make([]byte, n)
