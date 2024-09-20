@@ -1,6 +1,21 @@
 # 快速入门
 首先部署huacache节点
+```url
 link：https://github.com/huahuoao/huacache
+```
+## Docker
+```shell
+git clone https://github.com/huahuoao/huacache
+```
+```shell
+cd huacache
+```
+```shell
+docker build -t huacache .
+```
+```shell
+docker run -itd -p 9000:9000 huacache
+```
 ## 包导入
 
 ```shell
