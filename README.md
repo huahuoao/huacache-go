@@ -1,4 +1,5 @@
 # 快速入门
+首先部署huacache节点
 link：https://github.com/huahuoao/huacache
 ## 包导入
 
